@@ -1,0 +1,133 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+#include <ArduinoJson.h>
+
+// ---------- WIFI ----------
+const char* ssid = "YOUR_WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD";
+String webAppURL = "https://script.google.com/macros/s/XXXX/exec";
+
+// ---------- RFID ----------
+#define SS_PIN 5
+#define RST_PIN 27
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+// ---------- OLED ----------
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// ---------- BUZZER ----------
+#define BUZZER_PIN 26
+
+// ---------- FUNCTIONS ----------
+void buzzerSuccess() {
+  tone(BUZZER_PIN, 2000, 150);
+  delay(200);
+}
+
+void buzzerDuplicate() {
+  tone(BUZZER_PIN, 1500, 100);
+  delay(150);
+  tone(BUZZER_PIN, 1500, 100);
+}
+
+void buzzerError() {
+  tone(BUZZER_PIN, 500, 400);
+}
+
+void showOLED(String line1, String line2) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println(line1);
+  display.println(line2);
+  display.display();
+}
+
+// ---------- SETUP ----------
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  // OLED
+  Wire.begin(16, 17);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+  showOLED("RFID Attendance", "Connecting WiFi");
+
+  // WiFi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  showOLED("WiFi Connected", "Scan Card");
+
+  // RFID
+  SPI.begin();
+  rfid.PCD_Init();
+}
+
+// ---------- LOOP ----------
+void loop() {
+  if (!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial()) return;
+
+  // Read UID
+  String uid = "";
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    uid += String(rfid.uid.uidByte[i], HEX);
+  }
+  uid.toUpperCase();
+
+  Serial.println("UID: " + uid);
+  showOLED("Processing...", uid);
+
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = webAppURL + "?uid=" + uid;
+
+    http.begin(url);
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+      String payload = http.getString();
+      Serial.println(payload);
+
+      StaticJsonDocument<200> doc;
+      deserializeJson(doc, payload);
+
+      String status = doc["status"];
+      String name = doc["name"];
+
+      if (status == "REGISTERED") {
+        showOLED("Welcome", name);
+        buzzerSuccess();
+      }
+      else if (status == "DUPLICATE") {
+        showOLED("Already Marked", name);
+        buzzerDuplicate();
+      }
+      else {
+        showOLED("Unknown Card", "");
+        buzzerError();
+      }
+    }
+
+    http.end();
+  }
+
+  rfid.PICC_HaltA();
+  rfid.PCD_StopCrypto1();
+
+  delay(2000);
+  showOLED("Ready", "Scan Card");
+}
