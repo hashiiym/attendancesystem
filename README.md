@@ -1,63 +1,165 @@
-📘 RFID Attendance System with ESP32 + Google Sheets + OLED + Buzzer
+📘 RFID Attendance System using ESP32 + Google Sheets + OLED + Buzzer
 
-This is a smart IoT attendance system built using an ESP32 microcontroller, MFRC522 RFID reader, 0.91″ SSD1306 OLED display, and a buzzer. When a user scans an RFID tag, the system:
+A smart IoT-based attendance system built using ESP32, MFRC522 RFID reader, 0.91″ SSD1306 OLED display, and a buzzer, with Google Sheets as a cloud database.
 
-Reads the RFID card UID using the RC522 module.
+This project eliminates the need for a local server by using Google Apps Script Web App to store and manage attendance data in real time.
 
-Displays scan status on the OLED screen (e.g., “Present”, “Already Marked”, “Error”).
+🚀 Features
 
-Sends attendance data (UID + timestamp) over Wi-Fi to a Google Sheets spreadsheet.
+📡 Wi-Fi enabled attendance logging
 
-Provides audio feedback using a buzzer.
+🪪 RFID card scanning using RC522
 
-Stores all attendance logs in a Google Sheet via a deployed Google Apps Script web app.
+🟢 OLED display feedback
 
-📊 The Google Sheet becomes the cloud database — no local server required. This makes the system lightweight, scalable, and suitable for classrooms, labs, workshops, or offices.
+Student Name
 
-| Component                | Purpose                    |
-| ------------------------ | -------------------------- |
-| ESP32                    | Main controller with Wi-Fi |
-| RC522 RFID reader        | Reads RFID card UID        |
-| 0.91″ SSD1306 OLED (I2C) | Shows scan feedback        |
-| Buzzer                   | Audio notification         |
-| Wi-Fi + Google Sheets    | Logs attendance online     |
+Attendance Status (Registered / Duplicate / Unknown)
 
-📡 Workflow
+🔔 Buzzer audio feedback
+
+☁️ Google Sheets as cloud database
+
+🚫 Duplicate attendance prevention (once per day)
+
+📅 Automatic date & time logging
+
+⚡ Lightweight, fast, and scalable
+
+🧠 How It Works
 
 ESP32 connects to a Wi-Fi network.
 
-RFID card is presented to the RC522 reader.
+An RFID card is scanned using the RC522 module.
 
-UID is read and displayed on the OLED.
+The UID is read and shown on the OLED display.
 
-An HTTP POST sends UID + timestamp to a Google Apps Script URL.
+ESP32 sends the UID to a Google Apps Script Web App via HTTP.
 
-Google Apps Script writes the data into a Google Sheet as a new row.
+Google Apps Script:
 
-The buzzer confirms scan success or failure.
+Verifies the UID from the registered card list
 
-🛠️ Wiring Summary
+Prevents duplicate entries for the same day
 
-RFID RC522 → ESP32:
-| RC522 Pin | ESP32 |
-| --------- | ----- |
-| SDA       | D5    |
-| SCK       | D18   |
-| MOSI      | D23   |
-| MISO      | D19   |
-| RST       | D27   |
-| 3.3V      | 3.3V  |
-| GND       | GND   |
+Logs Date, Time, UID, and Name into Google Sheets
 
-0.91 OLED (I2C) → ESP32:
-| OLED Pin | ESP32 |
-| -------- | ----- |
-| VCC      | 3.3V  |
-| GND      | GND   |
-| SDA      | D21   |
-| SCL      | D22   |
+OLED displays the result and buzzer provides feedback.
 
-Buzzer → ESP32:
+📊 Google Sheets acts as the cloud backend — no server required.
 
-| Buzzer + | D26 |
-| Buzzer – | GND |
+🧰 Components Used
+Component	Purpose
+ESP32	Main controller with Wi-Fi
+MFRC522 RFID Reader	Reads RFID card UID
+0.91″ SSD1306 OLED (I2C)	Displays status messages
+Buzzer	Audio feedback
+Google Sheets	Cloud attendance database
+Google Apps Script	Backend automation
+📡 System Workflow
+RFID Card → RC522 → ESP32 → Wi-Fi → Google Apps Script → Google Sheets
+                           ↓
+                      OLED + Buzzer
+
+🛠️ Wiring Connections
+🔹 RFID RC522 → ESP32
+RC522 Pin	ESP32 Pin
+SDA	D5
+SCK	D18
+MOSI	D23
+MISO	D19
+RST	D27
+3.3V	3.3V
+GND	GND
+🔹 OLED Display (I²C) → ESP32
+OLED Pin	ESP32 Pin
+VCC	3.3V
+GND	GND
+SDA	D21
+SCL	D22
+🔹 Buzzer → ESP32
+Buzzer	ESP32
++	D26
+–	GND
+📦 Required Arduino Libraries
+
+Install these from Arduino Library Manager:
+
+WiFi.h
+
+HTTPClient.h
+
+MFRC522
+
+Adafruit SSD1306
+
+Adafruit GFX
+
+ArduinoJson
+
+☁️ Google Sheets Setup
+
+Create a Google Sheet with:
+
+Sheet 1: CardHolders (UID, Name)
+
+Sheet 2: Attendance (Date, Time, UID, Name)
+
+Open Extensions → Apps Script
+
+Paste the provided Apps Script code
+
+Deploy as Web App
+
+Execute as: Me
+
+Access: Anyone
+
+Copy the Web App URL into the ESP32 code
+
+🖥️ OLED Status Messages
+
+Welcome <Name> → Attendance marked
+
+Already Marked → Duplicate scan
+
+Unknown Card → UID not registered
+
+Ready | Scan Card → Idle state
+
+🎯 Applications
+
+Classrooms & colleges
+
+Laboratories
+
+Offices
+
+Workshops & events
+
+Secure access logging
+
+🔮 Future Improvements
+
+📱 Mobile dashboard
+
+🧑‍🎓 Student ID photos
+
+📶 Offline data caching
+
+📊 Attendance analytics
+
+🔐 HTTPS authentication
+
+🤝 Contributing
+
+Pull requests are welcome!
+For major changes, please open an issue first.
+
+📜 License
+
+This project is licensed under the MIT License.
+
+⭐ If you like this project
+
+Give it a ⭐ on GitHub — it really helps!
