@@ -49,13 +49,15 @@ OLED displays the result and buzzer provides feedback.
 📊 Google Sheets acts as the cloud backend — no server required.
 
 🧰 Components Used
-Component	Purpose
-ESP32	Main controller with Wi-Fi
-MFRC522 RFID Reader	Reads RFID card UID
-0.91″ SSD1306 OLED (I2C)	Displays status messages
-Buzzer	Audio feedback
-Google Sheets	Cloud attendance database
-Google Apps Script	Backend automation
+| Component                | Purpose                    |
+| ------------------------ | -------------------------- |
+| ESP32                    | Main controller with Wi-Fi |
+| MFRC522 RFID Reader      | Reads RFID card UID        |
+| 0.91″ SSD1306 OLED (I2C) | Displays status messages   |
+| Buzzer                   | Audio feedback             |
+| Google Sheets            | Cloud attendance database  |
+| Google Apps Script       | Backend automation         |
+
 📡 System Workflow
 RFID Card → RC522 → ESP32 → Wi-Fi → Google Apps Script → Google Sheets
                            ↓
@@ -63,20 +65,24 @@ RFID Card → RC522 → ESP32 → Wi-Fi → Google Apps Script → Google Sheets
 
 🛠️ Wiring Connections
 🔹 RFID RC522 → ESP32
-RC522 Pin	ESP32 Pin
-SDA	D5
-SCK	D18
-MOSI	D23
-MISO	D19
-RST	D27
-3.3V	3.3V
-GND	GND
+| RC522 Pin | ESP32 Pin |
+| --------- | --------- |
+| SDA       | D5        |
+| SCK       | D18       |
+| MOSI      | D23       |
+| MISO      | D19       |
+| RST       | D27       |
+| 3.3V      | 3.3V      |
+| GND       | GND       |
+
 🔹 OLED Display (I²C) → ESP32
-OLED Pin	ESP32 Pin
-VCC	3.3V
-GND	GND
-SDA	D21
-SCL	D22
+| OLED Pin | ESP32 Pin |
+| -------- | --------- |
+| VCC      | 3.3V      |
+| GND      | GND       |
+| SDA      | D21       |
+| SCL      | D22       |
+
 🔹 Buzzer → ESP32
 Buzzer	ESP32
 +	D26
