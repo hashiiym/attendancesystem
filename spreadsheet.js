@@ -1,39 +1,54 @@
-function doPost(e) {
-  var ss = SpreadsheetApp.openById("YOUR_SPREADSHEET_ID");
+function doGet(e) {
 
-  var registrySheet = ss.getSheetByName("Card_Registry");
-  var logSheet = ss.getSheetByName("Attendance_Log");
-
-  var uid = e.parameter.uid;
-  if (!uid) {
-    return ContentService.createTextOutput("UID Missing");
+  // 🔴 UID check
+  if (!e.parameter.uid) {
+    return sendJSON("ERROR", "UID missing");
   }
 
-  uid = uid.toString().trim().toUpperCase();
+  var uid = e.parameter.uid.trim().toUpperCase();
 
-  var data = registrySheet.getDataRange().getValues();
-  var found = false;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var cardSheet = ss.getSheetByName("CardHolders");
+  var attSheet = ss.getSheetByName("Attendance");
+
+  var today = Utilities.formatDate(new Date(), "Asia/Kolkata", "yyyy-MM-dd");
+  var timeNow = Utilities.formatDate(new Date(), "Asia/Kolkata", "HH:mm:ss");
+
+  // 🔍 Find UID in CardHolders
+  var cardData = cardSheet.getRange(2, 1, cardSheet.getLastRow(), 2).getValues();
   var name = "";
-  var roll = "";
 
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0].toString().toUpperCase() === uid) {
-      name = data[i][1];
-      roll = data[i][2];
-      found = true;
+  for (var i = 0; i < cardData.length; i++) {
+    if (cardData[i][0].toString() === uid) {
+      name = cardData[i][1];
       break;
     }
   }
 
-  if (!found) {
-    return ContentService.createTextOutput("Card Not Registered");
+  if (name === "") {
+    return sendJSON("UNKNOWN", "Card not registered");
   }
 
-  var now = new Date();
-  var date = Utilities.formatDate(now, "Asia/Kolkata", "yyyy-MM-dd");
-  var time = Utilities.formatDate(now, "Asia/Kolkata", "HH:mm:ss");
+  // 🚫 Duplicate check (once per day)
+  var attData = attSheet.getRange(2, 1, attSheet.getLastRow(), 4).getValues();
 
-  logSheet.appendRow([name, uid, roll, date, time]);
+  for (var j = 0; j < attData.length; j++) {
+    if (attData[j][0] === today && attData[j][2] === uid) {
+      return sendJSON("DUPLICATE", name);
+    }
+  }
 
-  return ContentService.createTextOutput("Attendance Marked");
+  // ✅ Add attendance row
+  attSheet.appendRow([today, timeNow, uid, name]);
+
+  return sendJSON("REGISTERED", name);
+}
+
+function sendJSON(status, message) {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      status: status,
+      name: message
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
