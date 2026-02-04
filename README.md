@@ -45,7 +45,7 @@ RFID RC522 → ESP32:
 | SCK       | D18   |
 | MOSI      | D23   |
 | MISO      | D19   |
-| RST       | D22   |
+| RST       | D27   |
 | 3.3V      | 3.3V  |
 | GND       | GND   |
 
@@ -59,5 +59,5 @@ RFID RC522 → ESP32:
 
 Buzzer → ESP32:
 
-| Buzzer + | Any Digital Pin (e.g., D25) |
+| Buzzer + | D26 |
 | Buzzer – | GND |
