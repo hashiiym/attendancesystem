@@ -7,9 +7,9 @@
 #include <ArduinoJson.h>
 
 // ---------- WIFI ----------
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
-String webAppURL = "https://script.google.com/macros/s/XXXX/exec";
+const char* ssid = "testwifi";
+const char* password = "9778759136";
+String webAppURL = "https://script.google.com/macros/s/AKfycbwv_XnkpIOz4W28yXjm2PdabtGuzOYlF9dvjc5k2uWKiifJMRgMjyaZC2by7STSLlRwrQ/exec";
 
 // ---------- RFID ----------
 #define SS_PIN 5
@@ -24,7 +24,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // ---------- BUZZER ----------
 #define BUZZER_PIN 26
 
-// ---------- FUNCTIONS ----------
+// ---------- BUZZER FUNCTIONS ----------
 void buzzerSuccess() {
   tone(BUZZER_PIN, 2000, 150);
   delay(200);
@@ -40,6 +40,7 @@ void buzzerError() {
   tone(BUZZER_PIN, 500, 400);
 }
 
+// ---------- OLED ----------
 void showOLED(String line1, String line2) {
   display.clearDisplay();
   display.setCursor(0, 0);
@@ -51,7 +52,6 @@ void showOLED(String line1, String line2) {
 // ---------- SETUP ----------
 void setup() {
   Serial.begin(115200);
-
   pinMode(BUZZER_PIN, OUTPUT);
 
   // OLED
@@ -78,24 +78,32 @@ void setup() {
 
 // ---------- LOOP ----------
 void loop() {
+
   if (!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
 
-  // Read UID
+  // ---------- READ UID ----------
   String uid = "";
+
   for (byte i = 0; i < rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] < 0x10) uid += "0";
     uid += String(rfid.uid.uidByte[i], HEX);
   }
+
   uid.toUpperCase();
 
   Serial.println("UID: " + uid);
   showOLED("Processing...", uid);
 
+  // ---------- SEND TO WEB APP ----------
   if (WiFi.status() == WL_CONNECTED) {
+
     HTTPClient http;
     String url = webAppURL + "?uid=" + uid;
 
     http.begin(url);
+    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+
     int httpCode = http.GET();
 
     if (httpCode > 0) {
@@ -103,28 +111,31 @@ void loop() {
       Serial.println(payload);
 
       StaticJsonDocument<200> doc;
-      deserializeJson(doc, payload);
+      DeserializationError error = deserializeJson(doc, payload);
 
-      String status = doc["status"];
-      String name = doc["name"];
+      if (!error) {
+        String status = doc["status"];
+        String name = doc["name"];
 
-      if (status == "REGISTERED") {
-        showOLED("Welcome", name);
-        buzzerSuccess();
-      }
-      else if (status == "DUPLICATE") {
-        showOLED("Already Marked", name);
-        buzzerDuplicate();
-      }
-      else {
-        showOLED("Unknown Card", "");
-        buzzerError();
+        if (status == "REGISTERED") {
+          showOLED("Welcome", name);
+          buzzerSuccess();
+        }
+        else if (status == "DUPLICATE") {
+          showOLED("Already Marked", name);
+          buzzerDuplicate();
+        }
+        else {
+          showOLED("Unknown Card", "");
+          buzzerError();
+        }
       }
     }
 
     http.end();
   }
 
+  // ---------- RFID CLEANUP ----------
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
 
